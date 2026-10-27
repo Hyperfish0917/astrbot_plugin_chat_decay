@@ -33,48 +33,51 @@ async def test_native_wake_is_preserved(plugin, roll):
 
 @pytest.mark.asyncio
 async def test_baseline_probability(plugin, roll):
-    roll["random"] = 0.049
+    roll["random"] = 0.199
     assert await run(plugin, FakeEvent())
-    roll["random"] = 0.051
+    roll["random"] = 0.201
     assert not await run(plugin, FakeEvent(group="new"))
 
 
 @pytest.mark.asyncio
-async def test_decay_60_25_8_and_cooldown(plugin, roll):
+async def test_decay_100_80_50_and_cooldown(plugin, roll):
     assert await run(plugin, FakeEvent("肥鱼"))
     key = "adapterA:group:1:9"
-    roll["random"] = .59
+    # First follow-up: 100% success for any 0 <= roll < 1.
+    roll["random"] = .99
     roll["now"] += 1
     assert await run(plugin, FakeEvent())
     assert plugin.group_states[key].accepted_turns == 1
-    roll["random"] = .26
+    # Second follow-up: 80%, failed rolls do not advance turns.
+    roll["random"] = .81
     roll["now"] += 1
     assert not await run(plugin, FakeEvent())
     assert plugin.group_states[key].accepted_turns == 1
-    roll["random"] = .24
+    roll["random"] = .79
     roll["now"] += 1
     assert await run(plugin, FakeEvent())
     assert plugin.group_states[key].accepted_turns == 2
-    roll["random"] = .09
+    # Third follow-up: 50%, success starts 90 seconds of cooldown.
+    roll["random"] = .51
     roll["now"] += 1
     assert not await run(plugin, FakeEvent())
-    roll["random"] = .079
+    roll["random"] = .49
     roll["now"] += 1
     assert await run(plugin, FakeEvent())
-    assert plugin.group_states[key].cooldown_until == roll["now"] + 120
+    assert plugin.group_states[key].cooldown_until == roll["now"] + 90
     roll["random"] = 0
     roll["now"] += 1
     assert not await run(plugin, FakeEvent())
-    roll["now"] += 120
-    roll["random"] = .051
+    roll["now"] += 90
+    roll["random"] = .201
     assert not await run(plugin, FakeEvent())
 
 
 @pytest.mark.asyncio
-async def test_cold_start_then_60_not_25(plugin, roll):
+async def test_cold_start_then_100_not_80(plugin, roll):
     assert await run(plugin, FakeEvent())
     roll["now"] += 1
-    roll["random"] = .59
+    roll["random"] = .99
     assert await run(plugin, FakeEvent())
     assert plugin.group_states["adapterA:group:1:9"].accepted_turns == 1
 
@@ -82,21 +85,21 @@ async def test_cold_start_then_60_not_25(plugin, roll):
 @pytest.mark.asyncio
 async def test_timeout_resets_to_baseline(plugin, roll):
     await run(plugin, FakeEvent("鲸鱼"))
-    roll["now"] += 46
-    roll["random"] = .25
+    roll["now"] += 31
+    roll["random"] = .21
     assert not await run(plugin, FakeEvent())
 
 
 @pytest.mark.asyncio
-async def test_timeout_just_before_45_sec(plugin, roll):
+async def test_timeout_at_30_sec(plugin, roll):
     await run(plugin, FakeEvent("鲸鱼"))
-    roll["now"] += 45
-    roll["random"] = .59
+    roll["now"] += 30
+    roll["random"] = .99
     assert await run(plugin, FakeEvent())
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("rate,expected", [(-1,.05), (2,.05), ("nan", .05), ("hello", .05), (None,.05), (0,0), (1,1)])
+@pytest.mark.parametrize("rate,expected", [(-1,.2), (2,.2), ("nan", .2), ("hello", .2), (None,.2), (0,0), (1,1)])
 async def test_probability_validation(plugin, roll, rate, expected):
     plugin.config["base_passive_rate"] = rate
     roll["random"] = .5
@@ -124,7 +127,7 @@ async def test_max_turns_one(plugin, roll):
 @pytest.mark.asyncio
 async def test_group_isolation(plugin, roll):
     await run(plugin, FakeEvent("肥鱼", group="1"))
-    roll["random"] = .1
+    roll["random"] = .3
     assert not await run(plugin, FakeEvent(group="2"))
     assert await run(plugin, FakeEvent(group="1"))
 
@@ -132,7 +135,7 @@ async def test_group_isolation(plugin, roll):
 @pytest.mark.asyncio
 async def test_adapter_and_bot_isolation(plugin, roll):
     await run(plugin, FakeEvent("肥鱼"))
-    roll["random"] = .1
+    roll["random"] = .3
     assert not await run(plugin, FakeEvent(adapter="adapterB"))
     assert not await run(plugin, FakeEvent(bot="10"))
 
@@ -193,10 +196,10 @@ async def test_reset_rates_preserves_other_settings(plugin, module, roll):
     plugin.config["base_passive_rate"] = .8
     await run(plugin, FakeEvent("自定义"))
     result = await plugin.reset_rates()
-    assert "默认概率" in result["message"]
+    assert "20%、100%、80%、50%" in result["message"]
     assert plugin.config["keywords"] == ["自定义"]
-    assert plugin.config["decay_rate_2"] == .25
-    assert plugin.config["base_passive_rate"] == .05
+    assert plugin.config["decay_rate_2"] == .8
+    assert plugin.config["base_passive_rate"] == .2
     assert plugin.group_states == {}
     assert plugin.config.saves == 1
 
@@ -226,4 +229,18 @@ def test_schema_matches_defaults(module):
 def test_metadata_contains_public_repo():
     content = (Path(__file__).resolve().parents[1]/"metadata.yaml").read_text()
     assert "https://github.com/Hyperfish0917/astrbot_plugin_chat_decay" in content
-    assert "1.2.0" in content
+    assert "1.3.0" in content
+
+
+def test_new_default_values_exact(module):
+    assert module.DEFAULTS == {
+        "keywords": ["肥鱼", "鲸鱼", "deepseek"],
+        "ignore_case": True,
+        "base_passive_rate": 0.2,
+        "decay_rate_1": 1.0,
+        "decay_rate_2": 0.8,
+        "decay_rate_3": 0.5,
+        "max_turns": 3,
+        "cooldown_seconds": 90,
+        "session_timeout_seconds": 30,
+    }
