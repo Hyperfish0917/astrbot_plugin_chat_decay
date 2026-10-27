@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>对话衰减 · 恢复默认设置</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, "Microsoft Yahei", sans-serif; color-scheme: light dark; }
+    body { max-width: 760px; margin: 0 auto; padding: 24px; background: var(--bg, #fff); color: var(--fg, #20232a); }
+    [data-theme="dark"] body { --bg: #15171b; --fg: #f0f1f3; }
+    .card { border: 1px solid #9995; border-radius: 14px; padding: 20px; margin: 16px 0; }
+    button { padding: 10px 16px; border-radius: 9px; border: 0; background: #2563eb; color: white; font: inherit; cursor: pointer; margin-top: 10px; }
+    button.secondary { background: #606c7e; }
+    button:disabled { opacity: .5; cursor: wait; }
+    p { line-height: 1.7; }
+    #result { min-height: 2em; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>群聊唤醒与对话衰减</h1>
+  <p>自定义关键词、三轮概率与冷却时间，请在插件的「配置」页面修改；这里提供一键恢复默认值。</p>
+  <section class="card"><h2>恢复默认概率</h2>
+    <p>只重置冷启动 5%、第 1 轮 60%、第 2 轮 25%、第 3 轮 8%；保留关键词、轮数和冷却时长。</p>
+    <button id="reset-rates">恢复默认概率</button>
+  </section>
+  <section class="card"><h2>恢复全部默认设置</h2>
+    <p>重置全部设置（包括关键词、大小写、轮数、冷却与话题超时）；请确认后操作。</p>
+    <button id="reset-all" class="secondary">恢复全部默认设置</button>
+  </section>
+  <p id="result" role="status" aria-live="polite"></p>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
