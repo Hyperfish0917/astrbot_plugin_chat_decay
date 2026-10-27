@@ -20,13 +20,13 @@ PLUGIN_NAME = "astrbot_plugin_chat_decay"
 DEFAULTS = {
     "keywords": ["肥鱼", "鲸鱼", "deepseek"],
     "ignore_case": True,
-    "base_passive_rate": 0.05,
-    "decay_rate_1": 0.60,
-    "decay_rate_2": 0.25,
-    "decay_rate_3": 0.08,
+    "base_passive_rate": 0.2,
+    "decay_rate_1": 1.0,
+    "decay_rate_2": 0.8,
+    "decay_rate_3": 0.5,
     "max_turns": 3,
-    "cooldown_seconds": 120,
-    "session_timeout_seconds": 45,
+    "cooldown_seconds": 90,
+    "session_timeout_seconds": 30,
 }
 RATE_KEYS = ("base_passive_rate", "decay_rate_1", "decay_rate_2", "decay_rate_3")
 
@@ -40,7 +40,7 @@ class GroupState:
     cooldown_until: float = 0.0
 
 
-@register("chat_decay", "Hyperfish0917", "关键词唤醒与群聊概率衰减", "1.2.0")
+@register("chat_decay", "Hyperfish0917", "关键词唤醒与群聊概率衰减", "1.3.0")
 class ChatDecayPlugin(Star):
     def __init__(self, context, config=None):
         super().__init__(context)
@@ -154,7 +154,7 @@ class ChatDecayPlugin(Star):
         # In AstrBot 4.29.3 ProcessStage, only this flag activates default LLM.
         event.is_at_or_wake_command = True
         if state.last_accepted_at is None:
-            # Cold start is the conversation's first response; next roll is 60%.
+            # Cold start is the conversation's first response; next roll uses decay_rate_1.
             state.accepted_turns = 0
         else:
             state.accepted_turns += 1
@@ -178,7 +178,7 @@ class ChatDecayPlugin(Star):
 
     async def reset_rates(self):
         self._reset(RATE_KEYS)
-        return json_response({"message": "已恢复默认概率 (5%、60%、25%、8%)"})
+        return json_response({"message": "已恢复默认概率 (20%、100%、80%、50%)"})
 
     async def reset_all(self):
         self._reset(DEFAULTS)
