@@ -16,6 +16,9 @@ class FakeEvent:
         self.is_at_or_wake_command = native
         self.parts = parts or []
         self.stop_calls = 0
+        self._extras = {}
+        self._has_send_oper = False
+        self.result = None
 
     def get_self_id(self):
         return self._self
@@ -26,8 +29,27 @@ class FakeEvent:
     def get_messages(self):
         return self.parts
 
+    def get_extra(self, key=None, default=None):
+        return self._extras.get(key, default) if key is not None else self._extras
+
+    def set_extra(self, key, value):
+        self._extras[key] = value
+
+    def get_result(self):
+        return self.result
+
     def stop_event(self):
         self.stop_calls += 1
+
+
+class FakeResult:
+    def __init__(self, model=True, streaming=False, chunks=None):
+        self.model = model
+        self.result_content_type = types.SimpleNamespace(name="STREAMING_RESULT" if streaming else "LLM_RESULT")
+        self.async_stream = chunks
+
+    def is_llm_result(self):
+        return self.model
 
 
 class FakeConfig(dict):
@@ -51,6 +73,7 @@ class FakeContext:
 def module(monkeypatch):
     astrbot = types.ModuleType("astrbot")
     astrbot.__path__ = []
+    astrbot.logger = types.SimpleNamespace(debug=lambda *a, **kw: None)
     api = types.ModuleType("astrbot.api")
     api.__path__ = []
     event = types.ModuleType("astrbot.api.event")
@@ -63,6 +86,14 @@ def module(monkeypatch):
 
         @staticmethod
         def event_message_type(*args, **kwargs):
+            return lambda method: method
+
+        @staticmethod
+        def after_message_sent(*args, **kwargs):
+            return lambda method: method
+
+        @staticmethod
+        def on_decorating_result(*args, **kwargs):
             return lambda method: method
 
     class Star:

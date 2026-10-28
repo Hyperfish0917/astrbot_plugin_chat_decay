@@ -19,4 +19,4 @@ async function reset(kind, confirmText) {
   }
 }
 rate.addEventListener("click", () => reset("reset-rates", "确认将四项概率恢复为 20%、100%、80%、50%？"));
-all.addEventListener("click", () => reset("reset-all", "确认恢复全部默认配置？自定义关键词也会被清除。"));
+all.addEventListener("click", () => reset("reset-all", "确认恢复全部默认配置？自定义关键词、接话判断和失败处理也会被重置。"));

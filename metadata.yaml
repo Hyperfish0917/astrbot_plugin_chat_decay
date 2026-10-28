@@ -1,8 +1,8 @@
 name: astrbot_plugin_chat_decay
 display_name: 群聊唤醒与对话衰减
 short_desc: 自定义关键词、概率衰减与强制冷却，减少无意义 LLM 调用
-desc: 为 AstrBot 群聊提供关键词强制唤醒、20% 冷启动插话、100%/80%/50% 跟进概率和冷却时间控制，支持可视化设置和一键重置。
-version: 1.3.0
+desc: 为 AstrBot 群聊提供关键词强制唤醒、20% 冷启动插话、100%/80%/50% 跟进概率和冷却时间控制，支持连续接话关联判断、概率失败结束、回复确认计数和一键重置。
+version: 1.4.0
 author: Hyperfish0917
 repo: https://github.com/Hyperfish0917/astrbot_plugin_chat_decay
 astrbot_version: ">=4.29.3"
